@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clustering Predictor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Clustering Predictor</h1>
+    <form id="clusteringForm">
+        <label for="points">Enter points (comma-separated, one point per line):</label>
+        <textarea id="points" placeholder="Example: 1.0, 2.0\n5.0, 6.0"></textarea>
+        <button type="submit">Predict Clusters</button>
+    </form>
+    <div id="result" class="result" style="display: none;"></div>
+
+    <script>
+        document.getElementById('clusteringForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const pointsInput = document.getElementById('points').value;
+            const points = pointsInput.split('\n').map(line => 
+                line.split(',').map(Number)
+            );
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ points })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('result').style.display = 'block';
+                    document.getElementById('result').innerHTML = `
+                        <h3>Predicted Clusters</h3>
+                        <p>${JSON.stringify(data.clusters)}</p>
+                    `;
+                } else {
+                    throw new Error(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                document.getElementById('result').style.display = 'block';
+                document.getElementById('result').innerHTML = `
+                    <h3>Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
